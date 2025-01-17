@@ -1,11 +1,53 @@
 <?php
-
-
 session_start();
 
+// Redirect if the user is not logged in or not an admin
 if (!isset($_SESSION['UserID']) || $_SESSION['Role'] !== 'admin') {
     header('Location: Login.php');
     exit();
+}
+
+// Include the Matches class
+require_once __DIR__ . '/Classes/Matches.php';
+
+// Check if the form is submitted
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get form data
+    $tournament = $_POST['league'];
+    $team1Name = $_POST['team1Name'];
+    $team1Logo = $_POST['team1Logo'];
+    $team2Name = $_POST['team2Name'];
+    $team2Logo = $_POST['team2Logo'];
+    $matchDate = $_POST['matchDate'];
+
+    // Default values for ongoing and final score
+    $ongoing = 0; // Match is not ongoing by default
+    
+    // Create an instance of the Matches class
+    $matches = new Matches();
+
+    // Call the AddMatch function
+    $result = $matches->AddMatch($tournament, $team1Name, $team1Logo, $team2Name, $team2Logo, $finalScore, $ongoing, $matchDate);
+
+    // Check if the match was added successfully
+    if ($result) {
+        // Redirect back to the admin dashboard with a success message
+        header('Location: Admin.php?status=success');
+        exit();
+    } else {
+        // Redirect back to the admin dashboard with an error message
+        header('Location: Admin.php?status=error');
+        exit();
+    }
+}
+
+// Display success or error message
+if (isset($_GET['status'])) {
+    if ($_GET['status'] === 'success') {
+        echo '<div class="alert success">Match added successfully!</div>';
+    } elseif ($_GET['status'] === 'error') {
+        echo '<div class="alert error">Failed to add match. Please try again.</div>';
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -15,6 +57,7 @@ if (!isset($_SESSION['UserID']) || $_SESSION['Role'] !== 'admin') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - PredictKing</title>
     <style>
+        /* Add your CSS styles here */
         * {
             margin: 0;
             padding: 0;
@@ -323,6 +366,23 @@ if (!isset($_SESSION['UserID']) || $_SESSION['Role'] !== 'admin') {
                 display: flex;
             }
         }
+
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .alert.success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .alert.error {
+            background-color: var(--accent);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -331,10 +391,7 @@ if (!isset($_SESSION['UserID']) || $_SESSION['Role'] !== 'admin') {
             <a href="index.html" class="nav-logo">PredictKing</a>
             <button class="menu-toggle" onclick="toggleMenu()">☰</button>
             <div class="nav-menu">
-                <a href="#" class="nav-link">Dashboard</a>
-                <a href="#" class="nav-link">Games</a>
-                <a href="#" class="nav-link">Users</a>
-                <a href="#" class="nav-link">Settings</a>
+                <a href="Classes/Logout.php" class="nav-link">Logout</a>
             </div>
         </nav>
     </header>
@@ -352,41 +409,44 @@ if (!isset($_SESSION['UserID']) || $_SESSION['Role'] !== 'admin') {
                     <p class="card-subtitle">Create a new prediction game</p>
                 </div>
                 <div class="card-body">
-                    <form id="addGameForm">
+                    <form id="addGameForm" method="POST" action="">
+                        <!-- League Input Field -->
                         <div class="form-group">
                             <label class="form-label">League</label>
-                            <select class="form-select" required>
-                                <option value="">Select League</option>
-                                <option value="premier-league">Premier League</option>
-                                <option value="la-liga">La Liga</option>
-                                <option value="bundesliga">Bundesliga</option>
-                                <option value="serie-a">Serie A</option>
-                            </select>
+                            <input type="text" name="league" class="form-input" placeholder="Enter League Name" required>
                         </div>
+
+                        <!-- Team 1 Details -->
                         <div class="form-grid">
                             <div class="form-group">
-                                <label class="form-label">Home Team</label>
-                                <select class="form-select" required>
-                                    <option value="">Select Team</option>
-                                    <option value="arsenal">Arsenal</option>
-                                    <option value="chelsea">Chelsea</option>
-                                    <option value="liverpool">Liverpool</option>
-                                </select>
+                                <label class="form-label">Team 1 Name</label>
+                                <input type="text" name="team1Name" class="form-input" placeholder="Enter Team 1 Name" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Away Team</label>
-                                <select class="form-select" required>
-                                    <option value="">Select Team</option>
-                                    <option value="arsenal">Arsenal</option>
-                                    <option value="chelsea">Chelsea</option>
-                                    <option value="liverpool">Liverpool</option>
-                                </select>
+                                <label class="form-label">Team 1 Image URL</label>
+                                <input type="url" name="team1Logo" class="form-input" placeholder="Enter Team 1 Image Link" required>
                             </div>
                         </div>
+
+                        <!-- Team 2 Details -->
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Team 2 Name</label>
+                                <input type="text" name="team2Name" class="form-input" placeholder="Enter Team 2 Name" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Team 2 Image URL</label>
+                                <input type="url" name="team2Logo" class="form-input" placeholder="Enter Team 2 Image Link" required>
+                            </div>
+                        </div>
+
+                        <!-- Match Date & Time -->
                         <div class="form-group">
                             <label class="form-label">Match Date & Time</label>
-                            <input type="datetime-local" class="form-input" required>
+                            <input type="datetime-local" name="matchDate" class="form-input" required>
                         </div>
+
+                        <!-- Submit Button -->
                         <button type="submit" class="submit-btn">Add Game</button>
                     </form>
                 </div>
@@ -471,4 +531,3 @@ if (!isset($_SESSION['UserID']) || $_SESSION['Role'] !== 'admin') {
     </script>
 </body>
 </html>
-
