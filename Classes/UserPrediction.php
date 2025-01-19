@@ -107,4 +107,6 @@ class UserPrediction extends Matches {
     
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    
 }
