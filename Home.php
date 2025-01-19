@@ -2,11 +2,15 @@
 // Start the session
 session_start();
 
-// Include the User class
+// Include the necessary classes
 require_once __DIR__ . '/Classes/User.php';
+require_once __DIR__ . '/Classes/Matches.php';
+require_once __DIR__ . '/Classes/UserPrediction.php';
 
-// Create an instance of the User class
+// Create instances of the classes
 $user = new User();
+$matchHandler = new Matches();
+$predictionManager = new UserPrediction();
 
 // Check if the user is logged in
 if (!isset($_SESSION['UserID'])) {
@@ -14,9 +18,6 @@ if (!isset($_SESSION['UserID'])) {
     header("Location: login.php");
     exit();
 }
-
-// Check if the logout action is requested
-
 
 // Retrieve user data
 $userId = $_SESSION['UserID'];
@@ -30,6 +31,36 @@ if ($userData) {
     echo "User data not found.";
     exit();
 }
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $matchId = $_POST['match_id'];
+    $team1Score = $_POST['team1_score'];
+    $team2Score = $_POST['team2_score'];
+
+    // Save the prediction
+    if ($predictionManager->save($userId, $matchId, $team1Score, $team2Score)) {
+        // Set a success message in the session
+        $_SESSION['success_message'] = 'Prediction saved successfully!';
+    } else {
+        // Set an error message in the session
+        $_SESSION['error_message'] = 'You have already predicted this match or an error occurred.';
+    }
+
+    // Redirect to the home page to prevent form resubmission
+    header("Location: home.php");
+    exit();
+}
+
+// Fetch matches and user data
+$matches = $matchHandler->GetMatches();
+$users = $user->retriveAllUserScore();
+
+// Display success or error messages
+$successMessage = $_SESSION['success_message'] ?? '';
+$errorMessage = $_SESSION['error_message'] ?? '';
+unset($_SESSION['success_message']); // Clear the message after displaying
+unset($_SESSION['error_message']); // Clear the message after displaying
 ?>
 
 <!DOCTYPE html>
@@ -44,6 +75,7 @@ if ($userData) {
             padding: 0;
             box-sizing: border-box;
             font-family: 'Inter', -apple-system, sans-serif;
+            scroll-behavior: smooth;
         }
 
         :root {
@@ -72,8 +104,9 @@ if ($userData) {
             max-width: 1400px;
             margin: 0 auto;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
+            gap: 1rem;
             padding: 0 2rem;
         }
 
@@ -85,9 +118,15 @@ if ($userData) {
             letter-spacing: 2px;
         }
 
+        .nav-logo span {
+            color: var(--accent);
+        }
+
         .nav-menu {
             display: flex;
-            gap: 3rem;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .nav-link {
@@ -358,26 +397,21 @@ if ($userData) {
         }
 
         /* Responsive Design */
-        @media (max-width: 1024px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-
-            .leaderboard {
-                margin-top: 2rem;
-            }
-        }
-
         @media (max-width: 768px) {
             .nav {
-                padding: 0 1rem;
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
             }
 
             .nav-menu {
-                gap: 1.5rem;
+                flex-direction: row;
+                align-items: center;
+                gap: 0.5rem;
             }
 
             .container {
+                grid-template-columns: 1fr;
                 padding: 1rem;
             }
 
@@ -395,30 +429,51 @@ if ($userData) {
                 font-size: 1rem;
             }
         }
+
+       /* Success and Error Messages */
+.message {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
     </style>
 </head>
 <body>
     <header class="header">
         <nav class="nav">
-            <div class="nav-logo">PredictKing</div>
+            <div class="nav-logo">Predict<span>King</span></div>
             <div class="nav-menu">
-                <a href="#" class="nav-link">Matches</a>
-                <a href="#" class="nav-link">History</a>
                 <a href="#" class="nav-link">Rules</a>
-                <a href="#" class="nav-link">Profile</a>
-                <a href="Classes/Logout.php" class="nav-link">Logout</a>
+                <a href="#" class="nav-link">News</a>
+                <a href="Classes/Logout.php" class="nav-link" style="color: red;">Logout</a>
             </div>
         </nav>
     </header>
 
     <div class="container">
+        
+        
+
         <main>
             <div class="profile-card">
                 <div class="profile-header">
                     <div class="profile-avatar"><?php echo strtoupper(substr($FirstName, 0, 1)); ?></div>
                     <div class="profile-info">
                         <h2><?php echo htmlspecialchars($FirstName . ' ' . $LastName); ?></h2>
-                        <p>Premium Member</p>
                     </div>
                 </div>
                 <div class="profile-stats">
@@ -427,92 +482,105 @@ if ($userData) {
                         <div class="stat-label">Points</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value">TBD</div>
-                        <div class="stat-label">TBD</div>
+                        <div class="stat-value">2X</div>
+                        <div class="stat-label">Ongoing Round</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value">TBD</div>
-                        <div class="stat-label">TBD</div>
+                        <div class="stat-value">4X</div>
+                        <div class="stat-label">Next Round</div>
                     </div>
                 </div>
             </div>
-
             <div class="matches-grid">
-    <div class="match-card">
-        <div class="match-header">
-            <div class="match-league">Premier League</div>
-            <div class="match-time">Today, 20:45</div>
-        </div>
-        <div class="match-content">
-            <div class="match-teams">
-                <div class="team">
-                    <div class="team-logo">
-                        <img src="https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg" alt="Arsenal Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                <?php foreach ($matches as $match): ?>
+                    <?php
+                    // Set the default timezone to match your local timezone
+                    date_default_timezone_set('Africa/Cairo'); // Use 'Africa/Cairo' as the timezone
+
+                    // Get the current date and time
+                    $currentDate = new DateTime('now', new DateTimeZone('Africa/Cairo'));
+
+                    // Get the match date and time from the database (format: 2025-01-31 20:50:00)
+                    $matchDate = new DateTime($match['date'], new DateTimeZone('Africa/Cairo'));
+
+                    // Calculate the cutoff time (1 hour before the match starts)
+                    $predictionCutoffTime = clone $matchDate;
+                    $predictionCutoffTime->modify('-1 hour');
+
+                    // Disable predictions if:
+                    // 1. The current time is after the cutoff time (less than 1 hour before the match), or
+                    // 2. The match has already started (current time is after the match time)
+                    $isDisabled = ($currentDate >= $predictionCutoffTime);
+
+                    // Check if the user has already predicted this match
+                    $userPrediction = UserPrediction::getUserPrediction($userId, $match['MatchID']);
+                    $hasPredicted = !empty($userPrediction);
+                    ?>
+                    <div class="match-card">
+                        <div class="match-header">
+                            <div class="match-league"><?php echo htmlspecialchars($match['Tournament']); ?></div>
+                            <div class="match-time"><?php echo htmlspecialchars($match['date']); ?></div>
+                        </div>
+                        <div class="match-content">
+                            <div class="match-teams">
+                                <div class="team">
+                                    <div class="team-logo">
+                                        <img src="<?php echo htmlspecialchars($match['Team1Logo']); ?>" alt="<?php echo htmlspecialchars($match['Team1Name']); ?> Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                                    </div>
+                                    <div class="team-name"><?php echo htmlspecialchars($match['Team1Name']); ?></div>
+                                </div>
+                                <div class="vs">VS</div>
+                                <div class="team">
+                                    <div class="team-logo">
+                                        <img src="<?php echo htmlspecialchars($match['Team2Logo']); ?>" alt="<?php echo htmlspecialchars($match['Team2Name']); ?> Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                                    </div>
+                                    <div class="team-name"><?php echo htmlspecialchars($match['Team2Name']); ?></div>
+                                </div>
+                            </div>
+                            <form class="prediction-form" method="POST" action="" <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?>>
+                                <input type="hidden" name="match_id" value="<?php echo $match['MatchID']; ?>">
+                                <input type="number" name="team1_score" class="prediction-input" min="0" max="99" placeholder="0" 
+                                    value="<?php echo $hasPredicted ? htmlspecialchars($userPrediction['Team1Score']) : ''; ?>" 
+                                    <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?>>
+                                <div class="vs">-</div>
+                                <input type="number" name="team2_score" class="prediction-input" min="0" max="99" placeholder="0" 
+                                    value="<?php echo $hasPredicted ? htmlspecialchars($userPrediction['Team2Score']) : ''; ?>" 
+                                    <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?>>
+                                <button type="submit" class="submit-btn" <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?> style="<?php echo $hasPredicted || $isDisabled ? 'background-color: black;' : ''; ?>">
+                                    <?php 
+                                    if ($hasPredicted) {
+                                        echo 'Predicted: ' . htmlspecialchars($userPrediction['Team1Score']) . ' - ' . htmlspecialchars($userPrediction['Team2Score']);
+                                    } elseif ($isDisabled) {
+                                        echo 'You cannot predict';
+                                    } else {
+                                        echo 'Submit Prediction';
+                                    }
+                                    ?>
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                    <div class="team-name">Arsenal</div>
-                </div>
-                <div class="vs">VS</div>
-                <div class="team">
-                    <div class="team-logo">
-                        <img src="https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg" alt="Chelsea Logo" style="width: 80px; height: 80px; object-fit: contain;">
-                    </div>
-                    <div class="team-name">Chelsea</div>
-                </div>
+                <?php endforeach; ?>
             </div>
-            <form class="prediction-form">
-                <input type="number" class="prediction-input" min="0" max="99" placeholder="0">
-                <div class="vs">-</div>
-                <input type="number" class="prediction-input" min="0" max="99" placeholder="0">
-                <button type="submit" class="submit-btn">Submit Prediction</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-
         </main>
 
-        <aside class="leaderboard">
-            <div class="leaderboard-header">
-                <h2 class="leaderboard-title">Top Predictors</h2>
+        <aside>
+            <div class="leaderboard">
+                <div class="leaderboard-header">
+                    <h3 class="leaderboard-title">Leaderboard</h3>
+                </div>
+                <ul class="leaderboard-list">
+                    <?php foreach ($users as $key => $value): ?>
+                        <li class="leaderboard-item">
+                            <div class="player-info">
+                                <div class="player-rank"><?php echo $key + 1; ?></div>
+                                <div><?php echo htmlspecialchars($value['FirstName'] . ' ' . $value['LastName']); ?></div>
+                            </div>
+                            <div class="player-points"><?php echo htmlspecialchars($value['TotalPoints']); ?> Points</div>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
-            <ul class="leaderboard-list">
-                <li class="leaderboard-item">
-                    <div class="player-info">
-                        <span class="player-rank">1</span>
-                        <span>John Doe</span>
-                    </div>
-                    <span class="player-points">4,120 pts</span>
-                </li>
-                <li class="leaderboard-item">
-                    <div class="player-info">
-                        <span class="player-rank">2</span>
-                        <span>Jane Smith</span>
-                    </div>
-                    <span class="player-points">3,980 pts</span>
-                </li>
-                <li class="leaderboard-item">
-                    <div class="player-info">
-                        <span class="player-rank">3</span>
-                        <span>Mike Johnson</span>
-                    </div>
-                    <span class="player-points">3,845 pts</span>
-                </li>
-                <li class="leaderboard-item">
-                    <div class="player-info">
-                        <span class="player-rank">4</span>
-                        <span>Sarah Wilson</span>
-                    </div>
-                    <span class="player-points">3,720 pts</span>
-                </li>
-                <li class="leaderboard-item">
-                    <div class="player-info">
-                        <span class="player-rank">5</span>
-                        <span>Tom Brown</span>
-                    </div>
-                    <span class="player-points">3,590 pts</span>
-                </li>
-            </ul>
         </aside>
     </div>
 </body>

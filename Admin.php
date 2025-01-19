@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $matches = new Matches();
 
     // Call the AddMatch function
-    $result = $matches->AddMatch($tournament, $team1Name, $team1Logo, $team2Name, $team2Logo, $finalScore, $ongoing, $matchDate);
+    $result = $matches->AddMatch($tournament, $team1Name, $team1Logo, $team2Name, $team2Logo, $ongoing, $matchDate);
 
     // Check if the match was added successfully
     if ($result) {
@@ -39,6 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: Admin.php?status=error');
         exit();
     }
+
+
 }
 
 // Display success or error message
@@ -49,6 +51,14 @@ if (isset($_GET['status'])) {
         echo '<div class="alert error">Failed to add match. Please try again.</div>';
     }
 }
+
+
+$matches = new Matches();
+$MatchesData = $matches->retrieveAllMatchesWithoutScore();
+
+
+$matches = new Matches();
+$MatchesData = $matches->retrieveAllMatches();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -459,21 +469,24 @@ if (isset($_GET['status'])) {
                 </div>
                 <div class="card-body">
                     <form id="updateScoreForm">
-                        <div class="form-group">
-                            <label class="form-label">Select Game</label>
-                            <select class="form-select" required>
-                                <option value="">Choose a game</option>
-                                <option value="1">Arsenal vs Chelsea - 20:45 Today</option>
-                                <option value="2">Barcelona vs Real Madrid - 21:00 Tomorrow</option>
-                            </select>
+                    <div class="form-group">
+                   <label for="gameSelect" class="form-label">Select Game</label>
+                   <select id="gameSelect" class="form-select" name="gameSelect" required>
+                   <option value="">Choose a game</option>
+                   <?php foreach ($MatchesData as $match): ?>
+                   <option value="<?php echo htmlspecialchars($match['MatchID']); ?>">
+                  <?php echo htmlspecialchars($match['Team1Name']) . ' vs ' . htmlspecialchars($match['Team2Name']); ?>
+                    </option>
+                   <?php endforeach; ?>
+                   </select>
                         </div>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label class="form-label">Home Score</label>
+                                <label class="form-label">Team 1 Score</label>
                                 <input type="number" class="form-input" min="0" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Away Score</label>
+                                <label class="form-label">Team 2 Score</label>
                                 <input type="number" class="form-input" min="0" required>
                             </div>
                         </div>
@@ -497,31 +510,22 @@ if (isset($_GET['status'])) {
         </div>
 
         <div class="games-list">
-            <h2 class="card-title">Recent Games</h2>
-            <div class="game-item">
-                <div class="game-info">
-                    <div class="game-teams">Arsenal vs Chelsea</div>
-                    <div class="game-meta">Premier League • Today, 20:45</div>
+            <h2 class="admin-title">Games List</h2>
+            <?php foreach ($MatchesData as $match): ?>
+                <div class="game-item">
+                    <div class="game-info">
+                        <div class="game-teams"><?php echo htmlspecialchars($match['Team1Name']) . ' vs ' . htmlspecialchars($match['Team2Name']); ?></div>
+                        <div class="game-meta"><?php echo htmlspecialchars($match['Tournament']); ?></div>
+                    </div>
+                    <?php if ($match['ongoing'] == 0): ?>
+                        <div class="game-status status-pending">Pending</div>
+                    <?php else: ?>
+                        <div class="game-status status-completed">Finished</div>
+                    <?php endif; ?>
                 </div>
-                <span class="game-status status-pending">Pending</span>
-            </div>
-            <div class="game-item">
-                <div class="game-info">
-                    <div class="game-teams">Barcelona vs Real Madrid</div>
-                    <div class="game-meta">La Liga • Tomorrow, 21:00</div>
-                </div>
-                <span class="game-status status-pending">Pending</span>
-            </div>
-            <div class="game-item">
-                <div class="game-info">
-                    <div class="game-teams">Liverpool vs Manchester United</div>
-                    <div class="game-meta">Premier League • Yesterday, 18:30</div>
-                    <div class="game-meta">Final Score: 2 - 1</div>
-                </div>
-                <span class="game-status status-completed">Completed</span>
-            </div>
+            <?php endforeach; ?>
         </div>
-    </div>
+
 
     <script>
         function toggleMenu() {

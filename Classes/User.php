@@ -83,5 +83,14 @@ class User {
         // Check if the UserID session variable is set
         return isset($_SESSION['UserID']);
     }
+
+
+    public function retriveAllUserScore() {
+        $stmt = $this->pdo->prepare("SELECT * FROM User WHERE type = 'user' ORDER BY TotalPoints DESC");
+        $stmt->execute();
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $users;
+    }
+
 }
 ?>
