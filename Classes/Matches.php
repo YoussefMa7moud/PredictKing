@@ -71,8 +71,8 @@ class Matches extends UserPrediction {
         // Debugging: Check input values
         error_log("AddFinalScore called with MatchID: $MatchID, Team1FinalScore: $Team1FinalScore, Team2FinalScore: $Team2FinalScore");
     
-        // Update the match scores in the database
-        $sql = "UPDATE matches SET Team1FinalScore = :team1FinalScore, Team2FinalScore = :team2FinalScore WHERE MatchID = :matchId";
+        // Update the match scores and ongoing status in the database
+        $sql = "UPDATE matches SET Team1FinalScore = :team1FinalScore, Team2FinalScore = :team2FinalScore, ongoing = 1 WHERE MatchID = :matchId";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':team1FinalScore', $Team1FinalScore);
         $stmt->bindParam(':team2FinalScore', $Team2FinalScore);
