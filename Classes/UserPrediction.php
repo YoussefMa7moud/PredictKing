@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/Database.php';
 
-class UserPrediction extends Matches {
+class UserPrediction  {
     // Class properties
     private $UserPredictionID;
     private $UserID;
@@ -106,6 +106,35 @@ class UserPrediction extends Matches {
         $stmt->execute();
     
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+
+    public function CalculatePoints($matchId, $team1FinalScore, $team2FinalScore, $ExactscorePoints, $WinnerPoints) {
+        $db = Database::getInstance();
+        $pdo = $db->getConnection();
+    
+        $sql = "SELECT UserID, Team1Score, Team2Score FROM userprediction WHERE MatchID = :matchId";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':matchId', $matchId);
+        $stmt->execute();
+        $predictions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+        foreach ($predictions as $prediction) {
+            $points = 0;
+            if ($prediction['Team1Score'] == $team1FinalScore && $prediction['Team2Score'] == $team2FinalScore) {
+                $points = $ExactscorePoints;
+            } elseif (($team1FinalScore > $team2FinalScore && $prediction['Team1Score'] > $prediction['Team2Score']) ||
+                      ($team1FinalScore < $team2FinalScore && $prediction['Team1Score'] < $prediction['Team2Score']) ||
+                      ($team1FinalScore == $team2FinalScore && $prediction['Team1Score'] == $prediction['Team2Score'])) {
+                $points = $WinnerPoints;
+            }
+    
+            $sql = "UPDATE user SET TotalPoints = TotalPoints + :points WHERE UserID = :UserID";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':points', $points);
+            $stmt->bindParam(':UserID', $prediction['UserID']);
+            $stmt->execute();
+        }
     }
 
     

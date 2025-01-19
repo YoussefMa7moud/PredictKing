@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/UserPrediction.php';
 
-class Matches {
+class Matches extends UserPrediction {
     private $pdo;
 
     // Constructor to initialize the database connection
@@ -63,5 +64,35 @@ class Matches {
         $predictionCutoffTime->modify('-1 hour');
     
         return ($currentDate < $predictionCutoffTime);
+    }
+
+
+    public function AddFinalScore($MatchID, $Team1FinalScore, $Team2FinalScore, $ExactscorePoints, $WinnerPoints) {
+        // Debugging: Check input values
+        error_log("AddFinalScore called with MatchID: $MatchID, Team1FinalScore: $Team1FinalScore, Team2FinalScore: $Team2FinalScore");
+    
+        // Update the match scores in the database
+        $sql = "UPDATE matches SET Team1FinalScore = :team1FinalScore, Team2FinalScore = :team2FinalScore WHERE MatchID = :matchId";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':team1FinalScore', $Team1FinalScore);
+        $stmt->bindParam(':team2FinalScore', $Team2FinalScore);
+        $stmt->bindParam(':matchId', $MatchID);
+        $result = $stmt->execute();
+    
+        // Debugging: Check if the SQL update was successful
+        if ($result) {
+            error_log("SQL Update Successful");
+        } else {
+            error_log("SQL Update Failed");
+        }
+    
+        // If the update was successful, calculate the points
+        if ($result) {
+            // Debugging: Ensure CalculatePoints is called
+            error_log("Calling CalculatePoints method");
+            $this->CalculatePoints($MatchID, $Team1FinalScore, $Team2FinalScore, $ExactscorePoints, $WinnerPoints);
+        }
+    
+        return $result;
     }
 }

@@ -10,8 +10,8 @@ if (!isset($_SESSION['UserID']) || $_SESSION['Role'] !== 'admin') {
 // Include the Matches class
 require_once __DIR__ . '/Classes/Matches.php';
 
-// Check if the form is submitted
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Check if the form is submitted for adding a match
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['league'])) {
     // Get form data
     $tournament = $_POST['league'];
     $team1Name = $_POST['team1Name'];
@@ -39,8 +39,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: Admin.php?status=error');
         exit();
     }
+}
 
+// Check if the form is submitted for updating the score
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['gameSelect'])) {
+    // Get form data
+    $matchId = $_POST['gameSelect'];
+    $team1FinalScore = $_POST['team1Score'];
+    $team2FinalScore = $_POST['team2Score'];
+    $ExactscorePoints = $_POST['exactScorePoints'];
+    $WinnerPoints = $_POST['winnerPoints'];
 
+    // Create an instance of the Matches class
+    $matches = new Matches();
+
+    // Call the AddFinalScore function
+    $result = $matches->AddFinalScore($matchId, $team1FinalScore, $team2FinalScore, $ExactscorePoints, $WinnerPoints);
+
+    // Check if the score was updated successfully
+    if ($result) {
+        // Redirect back to the admin dashboard with a success message
+        header('Location: Admin.php?status=success');
+        exit();
+    } else {
+        // Redirect back to the admin dashboard with an error message
+        header('Location: Admin.php?status=error');
+        exit();
+    }
 }
 
 // Display success or error message
@@ -51,11 +76,6 @@ if (isset($_GET['status'])) {
         echo '<div class="alert error">Failed to add match. Please try again.</div>';
     }
 }
-
-
-$matches = new Matches();
-$MatchesData = $matches->retrieveAllMatchesWithoutScore();
-
 
 $matches = new Matches();
 $MatchesData = $matches->retrieveAllMatches();
@@ -393,7 +413,7 @@ $MatchesData = $matches->retrieveAllMatches();
             background-color: var(--accent);
             color: white;
         }
-    </style>
+        </style>
 </head>
 <body>
     <header class="header">
@@ -468,26 +488,26 @@ $MatchesData = $matches->retrieveAllMatches();
                     <p class="card-subtitle">Add final scores and calculate points</p>
                 </div>
                 <div class="card-body">
-                    <form id="updateScoreForm">
-                    <div class="form-group">
-                   <label for="gameSelect" class="form-label">Select Game</label>
-                   <select id="gameSelect" class="form-select" name="gameSelect" required>
-                   <option value="">Choose a game</option>
-                   <?php foreach ($MatchesData as $match): ?>
-                   <option value="<?php echo htmlspecialchars($match['MatchID']); ?>">
-                  <?php echo htmlspecialchars($match['Team1Name']) . ' vs ' . htmlspecialchars($match['Team2Name']); ?>
-                    </option>
-                   <?php endforeach; ?>
-                   </select>
+                    <form id="updateScoreForm" method="POST" action="">
+                        <div class="form-group">
+                            <label for="gameSelect" class="form-label">Select Game</label>
+                            <select id="gameSelect" class="form-select" name="gameSelect" required>
+                                <option value="">Choose a game</option>
+                                <?php foreach ($MatchesData as $match): ?>
+                                    <option value="<?php echo htmlspecialchars($match['MatchID']); ?>">
+                                        <?php echo htmlspecialchars($match['Team1Name']) . ' vs ' . htmlspecialchars($match['Team2Name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Team 1 Score</label>
-                                <input type="number" class="form-input" min="0" required>
+                                <input type="number" name="team1Score" class="form-input" min="0" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Team 2 Score</label>
-                                <input type="number" class="form-input" min="0" required>
+                                <input type="number" name="team2Score" class="form-input" min="0" required>
                             </div>
                         </div>
                         <div class="points-info">
@@ -495,11 +515,11 @@ $MatchesData = $matches->retrieveAllMatches();
                             <div class="points-grid">
                                 <div class="points-item">
                                     <span>Exact Score</span>
-                                    <input type="number" class="form-input" value="3" min="0">
+                                    <input type="number" name="exactScorePoints" class="form-input" value="3" min="0">
                                 </div>
                                 <div class="points-item">
                                     <span>Correct Result</span>
-                                    <input type="number" class="form-input" value="1" min="0">
+                                    <input type="number" name="winnerPoints" class="form-input" value="1" min="0">
                                 </div>
                             </div>
                         </div>
@@ -525,7 +545,7 @@ $MatchesData = $matches->retrieveAllMatches();
                 </div>
             <?php endforeach; ?>
         </div>
-
+    </div>
 
     <script>
         function toggleMenu() {
