@@ -481,16 +481,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <button type="submit" class="submit-btn">Create Account</button>
 
-                <div class="social-login">
-                    <button type="button" class="social-btn">
-                        <img src="https://www.google.com/favicon.ico" alt="" width="20" height="20">
-                        Google
-                    </button>
-                    <button type="button" class="social-btn">
-                        <img src="https://www.facebook.com/favicon.ico" alt="" width="20" height="20">
-                        Facebook
-                    </button>
-                </div>
 
                 <div class="login-prompt">
                     Already have an account? <a href="Login.php" class="login-link">Sign in</a>

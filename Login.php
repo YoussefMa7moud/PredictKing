@@ -470,21 +470,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="checkbox" id="remember">
                         <span>Remember me</span>
                     </label>
-                    <a href="#" class="forgot-password">Forgot Password?</a>
+                    
                 </div>
 
                 <button type="submit" class="submit-btn">Sign In</button>
 
-                <div class="social-login">
-                    <button type="button" class="social-btn">
-                        <img src="https://www.google.com/favicon.ico" alt="" width="20" height="20">
-                        Google
-                    </button>
-                    <button type="button" class="social-btn">
-                        <img src="https://www.facebook.com/favicon.ico" alt="" width="20" height="20">
-                        Facebook
-                    </button>
-                </div>
+               
 
                 <div class="signup-prompt">
                     Don't have an account? <a href="register.php" class="signup-link">Sign up</a>
