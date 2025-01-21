@@ -129,7 +129,7 @@ class UserPrediction  {
                 $points = $WinnerPoints;
             }
     
-            $sql = "UPDATE user SET TotalPoints = TotalPoints + :points WHERE UserID = :UserID";
+            $sql = "UPDATE User SET TotalPoints = TotalPoints + :points WHERE UserID = :UserID";
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':points', $points);
             $stmt->bindParam(':UserID', $prediction['UserID']);

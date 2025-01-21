@@ -494,9 +494,11 @@ $MatchesData = $matches->retrieveAllMatches();
                             <select id="gameSelect" class="form-select" name="gameSelect" required>
                                 <option value="">Choose a game</option>
                                 <?php foreach ($MatchesData as $match): ?>
+                                 <?php if ($match['ongoing'] == 0): ?>
                                     <option value="<?php echo htmlspecialchars($match['MatchID']); ?>">
                                         <?php echo htmlspecialchars($match['Team1Name']) . ' vs ' . htmlspecialchars($match['Team2Name']); ?>
                                     </option>
+                                    <?php endif; ?>
                                 <?php endforeach; ?>
                             </select>
                         </div>

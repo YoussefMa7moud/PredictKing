@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once __DIR__ . '/Classes/Database.php';
 require_once __DIR__ . '/Classes/User.php';
 
@@ -492,7 +493,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="login-prompt">
-                    Already have an account? <a href="login.php" class="login-link">Sign in</a>
+                    Already have an account? <a href="Login.php" class="login-link">Sign in</a>
                 </div>
             </form>
         </div>

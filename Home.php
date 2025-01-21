@@ -15,7 +15,7 @@ $predictionManager = new UserPrediction();
 // Check if the user is logged in
 if (!isset($_SESSION['UserID'])) {
     // Redirect to the login page if the user is not logged in
-    header("Location: login.php");
+    header("Location: Login.php");
     exit();
 }
 
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Redirect to the home page to prevent form resubmission
-    header("Location: home.php");
+    header("Location: Home.php");
     exit();
 }
 
@@ -398,17 +398,7 @@ unset($_SESSION['error_message']); // Clear the message after displaying
 
         /* Responsive Design */
         @media (max-width: 768px) {
-            .nav {
-                flex-direction: column;
-                align-items: center;
-                gap: 1rem;
-            }
 
-            .nav-menu {
-                flex-direction: row;
-                align-items: center;
-                gap: 0.5rem;
-            }
 
             .container {
                 grid-template-columns: 1fr;
@@ -434,12 +424,13 @@ unset($_SESSION['error_message']); // Clear the message after displaying
     </style>
 </head>
 <body>
-    <header class="header">
+<header class="header">
         <nav class="nav">
             <div class="nav-logo">Predict<span>King</span></div>
             <div class="nav-menu">
-                <a href="#" class="nav-link">Rules</a>
-                <a href="#" class="nav-link">News</a>
+                <a href="Home.php" class="nav-link">Home</a>
+                <a href="Rules.php" class="nav-link">Rules</a>
+                <a href="News.php" class="nav-link">News</a>
                 <a href="Classes/Logout.php" class="nav-link" style="color: red;">Logout</a>
             </div>
         </nav>
@@ -463,12 +454,12 @@ unset($_SESSION['error_message']); // Clear the message after displaying
                         <div class="stat-label">Points</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value">2X</div>
-                        <div class="stat-label">Ongoing Round</div>
+                        <div class="stat-value">1X</div>
+                        <div class="stat-label">Ongoing Week</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value">4X</div>
-                        <div class="stat-label">Next Round</div>
+                        <div class="stat-value">2X</div>
+                        <div class="stat-label">Next Week</div>
                     </div>
                 </div>
             </div>
@@ -518,7 +509,7 @@ unset($_SESSION['error_message']); // Clear the message after displaying
                                     <div class="team-name"><?php echo htmlspecialchars($match['Team2Name']); ?></div>
                                 </div>
                             </div>
-                            <form class="prediction-form" method="POST" action="" <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?>>
+                            <form class="prediction-form" method="POST"  <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?>>
                                 <input type="hidden" name="match_id" value="<?php echo $match['MatchID']; ?>">
                                 <input type="number" name="team1_score" class="prediction-input" min="0" max="99" placeholder="0" 
                                     value="<?php echo $hasPredicted ? htmlspecialchars($userPrediction['Team1Score']) : ''; ?>" 

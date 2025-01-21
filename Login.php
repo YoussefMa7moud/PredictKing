@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once __DIR__ . '/Classes/Database.php';
 require_once __DIR__ . '/Classes/User.php';
 
@@ -401,7 +402,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 grid-template-columns: 1fr;
             }
         }
-    </style>
+     </style>
 </head>
 <body>
     <div class="loader">
@@ -440,7 +441,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="login-main">
-            <form class="login-form" method="POST" action="login.php" onsubmit="handleSubmit(event)">
+            <form class="login-form" method="POST"  onsubmit="handleSubmit(event)">
                 <div class="form-header">
                     <h1 class="form-title">Welcome Back</h1>
                     <p class="form-subtitle">Sign in to continue your prediction journey</p>

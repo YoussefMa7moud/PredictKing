@@ -35,7 +35,7 @@ class User {
     }
 
     // Method to log in a user
-    public function login($email, $password) {
+public function login($email, $password) {
         // Validate input
         if (empty($email) || empty($password)) {
             return "Email and password are required.";
@@ -63,7 +63,7 @@ class User {
             return "Invalid email or password.";
         }
     }
-
+    
     public function retrieveUserDataWithId($id) {
         // Fetch user from the database
         $stmt = $this->pdo->prepare("SELECT * FROM User WHERE UserID = ?");
@@ -71,8 +71,6 @@ class User {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         return $user;
     }
-
-
 
     public function isLoggedIn() {
         // Start the session if it hasn't been started yet
@@ -84,13 +82,10 @@ class User {
         return isset($_SESSION['UserID']);
     }
 
-
     public function retriveAllUserScore() {
         $stmt = $this->pdo->prepare("SELECT * FROM User WHERE type = 'user' ORDER BY TotalPoints DESC");
         $stmt->execute();
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $users;
     }
-
 }
-?>
