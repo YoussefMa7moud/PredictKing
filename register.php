@@ -444,8 +444,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <?php if (!empty($result)): ?>
-                    <div class="error-message" style="color: red; text-align: center; margin-bottom: 1rem;"><?php echo $result; ?></div>
-                <?php endif; ?>
+    <div class="message" style="text-align: center; margin-bottom: 1rem; color: <?php echo ($result === 'Account created successfully!') ? 'green' : 'red'; ?>;">
+        <?php echo $result; ?>
+    </div>
+<?php endif; ?>
 
                 <div class="form-row">
                     <div class="form-group">
