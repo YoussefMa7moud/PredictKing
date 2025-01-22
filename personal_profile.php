@@ -12,15 +12,25 @@ $user = new User();
 $matchHandler = new Matches();
 $predictionManager = new UserPrediction();
 
-// Check if the user is logged in
+// Check if the user_id is provided in the query string
+if (!isset($_GET['user_id'])) {
+    // Redirect to the home page if no user_id is provided
+    header("Location: Home.php");
+    exit();
+}
+
+
 if (!isset($_SESSION['UserID'])) {
     // Redirect to the login page if the user is not logged in
     header("Location: Login.php");
     exit();
 }
 
-// Retrieve user data
-$userId = $_SESSION['UserID'];
+
+// Retrieve the user_id from the query parameter
+$userId = $_GET['user_id'];
+
+// Fetch user data for the passed user_id
 $userData = $user->retrieveUserDataWithId($userId);
 
 if ($userData) {
@@ -32,31 +42,23 @@ if ($userData) {
     exit();
 }
 
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $matchId = $_POST['match_id'];
-    $team1Score = $_POST['team1_score'];
-    $team2Score = $_POST['team2_score'];
+// Fetch all matches
+$matches = $matchHandler->GetMatches();
 
-    // Save the prediction
-    if ($predictionManager->save($userId, $matchId, $team1Score, $team2Score)) {
-        // Set a success message in the session
-        $_SESSION['success_message'] = 'Prediction saved successfully!';
-    } else {
-        // Set an error message in the session
-        $_SESSION['error_message'] = 'You have already predicted this match or an error occurred.';
+// Fetch predictions for the user for each match
+$userPredictions = [];
+foreach ($matches as $match) {
+    $matchId = $match['MatchID'];
+    $prediction = $predictionManager->getUserPrediction($userId, $matchId);
+    if ($prediction) {
+        $userPredictions[$matchId] = $prediction;
     }
-
-    // Redirect to the home page to prevent form resubmission
-    header("Location: Home.php");
-    exit();
 }
 
-// Fetch matches and user data
-$matches = $matchHandler->GetMatches();
+
 $users = $user->retriveAllUserScore();
 
-// Display success or error messages
+// Display success or error messages (if any)
 $successMessage = $_SESSION['success_message'] ?? '';
 $errorMessage = $_SESSION['error_message'] ?? '';
 unset($_SESSION['success_message']); // Clear the message after displaying
@@ -68,7 +70,7 @@ unset($_SESSION['error_message']); // Clear the message after displaying
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PredictKing - Football Prediction League</title>
+    <title>PredictKing - User Predictions</title>
     <style>
         * {
             margin: 0;
@@ -499,7 +501,7 @@ unset($_SESSION['error_message']); // Clear the message after displaying
 .player-link:hover {
     background-color: #f5f5f5;
 }
-    </style>
+</style>
 </head>
 <body>
 <header class="header">
@@ -523,106 +525,24 @@ unset($_SESSION['error_message']); // Clear the message after displaying
                     <h2><?php echo htmlspecialchars($FirstName . ' ' . $LastName); ?></h2>
                 </div>
             </div>
-            <div class="profile-stats">
                 <div class="stat">
                     <div class="stat-value"><?php echo htmlspecialchars($TotalPoints); ?></div>
                     <div class="stat-label">Points</div>
                 </div>
-                <div class="stat">
-                    <div class="stat-value">1X</div>
-                    <div class="stat-label">Ongoing Week</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">2X</div>
-                    <div class="stat-label">Next Week</div>
-                </div>
             </div>
-        </div>
-        <div class="matches-grid">
-            <?php foreach ($matches as $match): ?>
-                <?php
-                // Check if the match is upcoming (ongoing == 0)
-                if ($match['ongoing'] == 0) {
-                    // Set the default timezone to match your local timezone
-                    date_default_timezone_set('Africa/Cairo'); // Use 'Africa/Cairo' as the timezone
-
-                    // Get the current date and time
-                    $currentDate = new DateTime('now', new DateTimeZone('Africa/Cairo'));
-
-                    // Get the match date and time from the database (format: 2025-01-31 20:50:00)
-                    $matchDate = new DateTime($match['date'], new DateTimeZone('Africa/Cairo'));
-
-                    // Calculate the cutoff time (1 hour before the match starts)
-                    $predictionCutoffTime = clone $matchDate;
-                    $predictionCutoffTime->modify('-1 hour');
-
-                    // Disable predictions if:
-                    // 1. The current time is after the cutoff time (less than 1 hour before the match), or
-                    // 2. The match has already started (current time is after the match time)
-                    $isDisabled = ($currentDate >= $predictionCutoffTime);
-
-                    // Check if the user has already predicted this match
-                    $userPrediction = UserPrediction::getUserPrediction($userId, $match['MatchID']);
-                    $hasPredicted = !empty($userPrediction);
-                ?>
-                    <div class="match-card">
-                        <div class="match-header">
-                            <div class="match-league"><?php echo htmlspecialchars($match['Tournament']); ?></div>
-                            <div class="match-time"><?php echo htmlspecialchars($match['date']); ?></div>
-                        </div>
-                        <div class="match-content">
-                            <div class="match-teams">
-                                <div class="team">
-                                    <div class="team-logo">
-                                        <img src="<?php echo htmlspecialchars($match['Team1Logo']); ?>" alt="<?php echo htmlspecialchars($match['Team1Name']); ?> Logo" style="width: 80px; height: 80px; object-fit: contain;">
-                                    </div>
-                                    <div class="team-name"><?php echo htmlspecialchars($match['Team1Name']); ?></div>
-                                </div>
-                                <div class="vs">VS</div>
-                                <div class="team">
-                                    <div class="team-logo">
-                                        <img src="<?php echo htmlspecialchars($match['Team2Logo']); ?>" alt="<?php echo htmlspecialchars($match['Team2Name']); ?> Logo" style="width: 80px; height: 80px; object-fit: contain;">
-                                    </div>
-                                    <div class="team-name"><?php echo htmlspecialchars($match['Team2Name']); ?></div>
-                                </div>
-                            </div>
-                            <form class="prediction-form" method="POST" <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?>>
-                                <input type="hidden" name="match_id" value="<?php echo $match['MatchID']; ?>">
-                                <input type="number" name="team1_score" class="prediction-input" min="0" max="99" placeholder="0" 
-                                    value="<?php echo $hasPredicted ? htmlspecialchars($userPrediction['Team1Score']) : ''; ?>" 
-                                    <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?>>
-                                <div class="vs">-</div>
-                                <input type="number" name="team2_score" class="prediction-input" min="0" max="99" placeholder="0" 
-                                    value="<?php echo $hasPredicted ? htmlspecialchars($userPrediction['Team2Score']) : ''; ?>" 
-                                    <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?>>
-                                <button type="submit" class="submit-btn" <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?> style="<?php echo $hasPredicted || $isDisabled ? 'background-color: black;' : ''; ?>">
-                                    <?php 
-                                    if ($hasPredicted) {
-                                        echo 'Predicted: ' . htmlspecialchars($userPrediction['Team1Score']) . ' - ' . htmlspecialchars($userPrediction['Team2Score']);
-                                    } elseif ($isDisabled) {
-                                        echo 'You cannot predict';
-                                    } else {
-                                        echo 'Submit Prediction';
-                                    }
-                                    ?>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                <?php } ?>
-            <?php endforeach; ?>
-        </div>
+      
 
         <!-- History Section -->
         <div class="history-section" style="background-color: #2B2D42;">
-            <h3 style="color: white;">History 🕓</h3>
+            <h3 style="color: white;">Predictions by <?php echo htmlspecialchars($FirstName); ?> 🕓</h3>
             <div class="matches-grid">
                 <?php foreach ($matches as $match): ?>
                     <?php
                     // Check if the match is ongoing or completed
                     if ($match['ongoing'] == 1) {
-                        // Check if the user has already predicted this match
-                        $userPrediction = UserPrediction::getUserPrediction($userId, $match['MatchID']);
+                        // Check if the user has predicted this match
+                        $matchId = $match['MatchID'];
+                        $userPrediction = $userPredictions[$matchId] ?? null;
                         $hasPredicted = !empty($userPrediction);
                     ?>
                         <div class="match-card">
@@ -655,14 +575,14 @@ unset($_SESSION['error_message']); // Clear the message after displaying
                                 <div class="prediction-display">
                                     <?php if ($hasPredicted): ?>
                                         <div class="user-prediction">
-                                            <span>Your Prediction:</span>
+                                            <span>Prediction:</span>
                                             <span class="prediction-score">
                                                 <?php echo htmlspecialchars($userPrediction['Team1Score']); ?> - <?php echo htmlspecialchars($userPrediction['Team2Score']); ?>
                                             </span>
                                         </div>
                                     <?php else: ?>
                                         <div class="no-prediction">
-                                            You did not predict this match.
+                                            No prediction for this match.
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -674,8 +594,8 @@ unset($_SESSION['error_message']); // Clear the message after displaying
         </div>
     </main>
 
-    <aside>
-        <!-- Leaderboard Section -->
+
+     <!-- Leaderboard Section -->
         <div class="leaderboard">
     <div class="leaderboard-header" onclick="toggleLeaderboard()">
         <h3 class="leaderboard-title">Leaderboard</h3>
@@ -684,7 +604,7 @@ unset($_SESSION['error_message']); // Clear the message after displaying
     <ul class="leaderboard-list" id="leaderboard-list">
         <?php foreach ($users as $key => $value): ?>
             <li class="leaderboard-item">
-                <a href="personal_profile.php?user_id=<?php echo $value['UserID']; ?>" class="player-link">
+            <a href="personal_profile.php?user_id=<?php echo $value['UserID']; ?>" class="player-link">
                     <div class="player-info">
                         <div class="player-rank"><?php echo $key + 1; ?></div>
                         <div><?php echo htmlspecialchars($value['FirstName'] . ' ' . $value['LastName']); ?></div>
@@ -702,5 +622,6 @@ unset($_SESSION['error_message']); // Clear the message after displaying
         leaderboardList.classList.toggle('active');
     }
 </script>
+</div>
 </body>
 </html>
