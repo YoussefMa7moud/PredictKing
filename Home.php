@@ -353,6 +353,10 @@ unset($_SESSION['error_message']); // Clear the message after displaying
             color: white;
             padding: 1.5rem;
             text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer; /* Make the header clickable */
         }
 
         .leaderboard-title {
@@ -396,76 +400,133 @@ unset($_SESSION['error_message']); // Clear the message after displaying
             color: var(--primary);
         }
 
-        /* Responsive Design */
+        /* Leaderboard Toggle Button */
+        .leaderboard-toggle {
+            font-size: 1.5rem;
+            transition: transform 0.3s ease; /* Add a smooth rotation animation */
+        }
+
+        .leaderboard-list.active + .leaderboard-header .leaderboard-toggle {
+            transform: rotate(180deg); /* Rotate the arrow when the list is active */
+        }
+
+        /* History Section */
+        .history-section {
+            margin-top: 2rem;
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-section h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .history-section .match-card {
+            margin-bottom: 1.5rem;
+        }
+
+        .history-section .match-header {
+            background-color: #Ef233C;
+        }
+
+        .history-section .team-name {
+            color: black;
+        }
+
+        .prediction-display {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .user-prediction {
+            font-weight: bold;
+            color: #4CAF50; /* Green color for predictions */
+        }
+
+        .no-prediction {
+            font-style: italic;
+            color: black; /* Gray color for no prediction */
+        }
+
+        .prediction-score {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        /* Mobile Styles */
         @media (max-width: 768px) {
-
-
             .container {
                 grid-template-columns: 1fr;
                 padding: 1rem;
             }
 
-            .match-teams {
-                gap: 1rem;
+            /* Reorder elements for mobile */
+            .container > aside {
+                order: 1; /* Leaderboard appears first */
             }
 
-            .team-logo {
-                width: 60px;
-                height: 60px;
-                font-size: 1.2rem;
+            .container > main {
+                order: 2; /* Main content (matches and history) appears second */
             }
 
-            .team-name {
-                font-size: 1rem;
+            .leaderboard-list {
+                display: none; /* Hide leaderboard list by default on mobile */
+            }
+
+            .leaderboard-list.active {
+                display: block; /* Show leaderboard list when active */
             }
         }
-
-
     </style>
 </head>
 <body>
 <header class="header">
-        <nav class="nav">
-            <div class="nav-logo">Predict<span>King</span></div>
-            <div class="nav-menu">
-                <a href="Home.php" class="nav-link">Home</a>
-                <a href="Rules.php" class="nav-link">Rules</a>
-                <a href="News.php" class="nav-link">News</a>
-                <a href="Classes/Logout.php" class="nav-link" style="color: red;">Logout</a>
-            </div>
-        </nav>
-    </header>
+    <nav class="nav">
+        <div class="nav-logo">Predict<span>King</span></div>
+        <div class="nav-menu">
+            <a href="Home.php" class="nav-link">Home</a>
+            <a href="Rules.php" class="nav-link">Rules</a>
+            <a href="News.php" class="nav-link">News</a>
+            <a href="Classes/Logout.php" class="nav-link" style="color: red;">Logout</a>
+        </div>
+    </nav>
+</header>
 
-    <div class="container">
-
-        
-
-        <main>
-            <div class="profile-card">
-                <div class="profile-header">
-                    <div class="profile-avatar"><?php echo strtoupper(substr($FirstName, 0, 1)); ?></div>
-                    <div class="profile-info">
-                        <h2><?php echo htmlspecialchars($FirstName . ' ' . $LastName); ?></h2>
-                    </div>
-                </div>
-                <div class="profile-stats">
-                    <div class="stat">
-                        <div class="stat-value"><?php echo htmlspecialchars($TotalPoints); ?></div>
-                        <div class="stat-label">Points</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-value">1X</div>
-                        <div class="stat-label">Ongoing Week</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-value">2X</div>
-                        <div class="stat-label">Next Week</div>
-                    </div>
+<div class="container">
+    <main>
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar"><?php echo strtoupper(substr($FirstName, 0, 1)); ?></div>
+                <div class="profile-info">
+                    <h2><?php echo htmlspecialchars($FirstName . ' ' . $LastName); ?></h2>
                 </div>
             </div>
-            <div class="matches-grid">
-                <?php foreach ($matches as $match): ?>
-                    <?php
+            <div class="profile-stats">
+                <div class="stat">
+                    <div class="stat-value"><?php echo htmlspecialchars($TotalPoints); ?></div>
+                    <div class="stat-label">Points</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">1X</div>
+                    <div class="stat-label">Ongoing Week</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">2X</div>
+                    <div class="stat-label">Next Week</div>
+                </div>
+            </div>
+        </div>
+        <div class="matches-grid">
+            <?php foreach ($matches as $match): ?>
+                <?php
+                // Check if the match is upcoming (ongoing == 0)
+                if ($match['ongoing'] == 0) {
                     // Set the default timezone to match your local timezone
                     date_default_timezone_set('Africa/Cairo'); // Use 'Africa/Cairo' as the timezone
 
@@ -487,7 +548,7 @@ unset($_SESSION['error_message']); // Clear the message after displaying
                     // Check if the user has already predicted this match
                     $userPrediction = UserPrediction::getUserPrediction($userId, $match['MatchID']);
                     $hasPredicted = !empty($userPrediction);
-                    ?>
+                ?>
                     <div class="match-card">
                         <div class="match-header">
                             <div class="match-league"><?php echo htmlspecialchars($match['Tournament']); ?></div>
@@ -509,7 +570,7 @@ unset($_SESSION['error_message']); // Clear the message after displaying
                                     <div class="team-name"><?php echo htmlspecialchars($match['Team2Name']); ?></div>
                                 </div>
                             </div>
-                            <form class="prediction-form" method="POST"  <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?>>
+                            <form class="prediction-form" method="POST" <?php echo $hasPredicted || $isDisabled ? 'disabled' : ''; ?>>
                                 <input type="hidden" name="match_id" value="<?php echo $match['MatchID']; ?>">
                                 <input type="number" name="team1_score" class="prediction-input" min="0" max="99" placeholder="0" 
                                     value="<?php echo $hasPredicted ? htmlspecialchars($userPrediction['Team1Score']) : ''; ?>" 
@@ -532,28 +593,98 @@ unset($_SESSION['error_message']); // Clear the message after displaying
                             </form>
                         </div>
                     </div>
+                <?php } ?>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- History Section -->
+        <div class="history-section" style="background-color: #2B2D42;">
+            <h3 style="color: white;">History 🕓</h3>
+            <div class="matches-grid">
+                <?php foreach ($matches as $match): ?>
+                    <?php
+                    // Check if the match is ongoing or completed
+                    if ($match['ongoing'] == 1) {
+                        // Check if the user has already predicted this match
+                        $userPrediction = UserPrediction::getUserPrediction($userId, $match['MatchID']);
+                        $hasPredicted = !empty($userPrediction);
+                    ?>
+                        <div class="match-card">
+                            <div class="match-header" style="background-color: #Ef233C;">
+                                <div class="match-league"><?php echo htmlspecialchars($match['Tournament']); ?></div>
+                                <div class="match-time">Ended</div>
+                            </div>
+                            <div class="match-content">
+                                <div class="match-teams">
+                                    <div class="team">
+                                        <div class="team-logo">
+                                            <img src="<?php echo htmlspecialchars($match['Team1Logo']); ?>" alt="<?php echo htmlspecialchars($match['Team1Name']); ?> Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                                        </div>
+                                        <div class="team-name" style="color:black"><?php echo htmlspecialchars($match['Team1Name']); ?></div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <!-- Team 1 Score -->
+                                        <span style="font-weight: bold; font-size: 1.2em; color: black;"><?php echo htmlspecialchars($match['Team1FinalScore'] ?? '0'); ?></span>
+                                        <div class="vs">VS</div>
+                                        <!-- Team 2 Score -->
+                                        <span style="font-weight: bold; font-size: 1.2em; color: black;"><?php echo htmlspecialchars($match['Team2FinalScore'] ?? '0'); ?></span>
+                                    </div>
+                                    <div class="team">
+                                        <div class="team-logo">
+                                            <img src="<?php echo htmlspecialchars($match['Team2Logo']); ?>" alt="<?php echo htmlspecialchars($match['Team2Name']); ?> Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                                        </div>
+                                        <div class="team-name" style="color:black"><?php echo htmlspecialchars($match['Team2Name']); ?></div>
+                                    </div>
+                                </div>
+                                <div class="prediction-display">
+                                    <?php if ($hasPredicted): ?>
+                                        <div class="user-prediction">
+                                            <span>Your Prediction:</span>
+                                            <span class="prediction-score">
+                                                <?php echo htmlspecialchars($userPrediction['Team1Score']); ?> - <?php echo htmlspecialchars($userPrediction['Team2Score']); ?>
+                                            </span>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="no-prediction">
+                                            You did not predict this match.
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php } ?>
                 <?php endforeach; ?>
             </div>
-        </main>
+        </div>
+    </main>
 
-        <aside>
-            <div class="leaderboard">
-                <div class="leaderboard-header">
-                    <h3 class="leaderboard-title">Leaderboard</h3>
-                </div>
-                <ul class="leaderboard-list">
-                    <?php foreach ($users as $key => $value): ?>
-                        <li class="leaderboard-item">
-                            <div class="player-info">
-                                <div class="player-rank"><?php echo $key + 1; ?></div>
-                                <div><?php echo htmlspecialchars($value['FirstName'] . ' ' . $value['LastName']); ?></div>
-                            </div>
-                            <div class="player-points"><?php echo htmlspecialchars($value['TotalPoints']); ?> Points</div>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
+    <aside>
+        <!-- Leaderboard Section -->
+        <div class="leaderboard">
+            <div class="leaderboard-header" onclick="toggleLeaderboard()">
+                <h3 class="leaderboard-title">Leaderboard</h3>
+                <span class="leaderboard-toggle">▼</span>
             </div>
-        </aside>
-    </div>
+            <ul class="leaderboard-list" id="leaderboard-list">
+                <?php foreach ($users as $key => $value): ?>
+                    <li class="leaderboard-item">
+                        <div class="player-info">
+                            <div class="player-rank"><?php echo $key + 1; ?></div>
+                            <div><?php echo htmlspecialchars($value['FirstName'] . ' ' . $value['LastName']); ?></div>
+                        </div>
+                        <div class="player-points"><?php echo htmlspecialchars($value['TotalPoints']); ?> Points</div>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </aside>
+</div>
+
+<script>
+    function toggleLeaderboard() {
+        const leaderboardList = document.getElementById('leaderboard-list');
+        leaderboardList.classList.toggle('active');
+    }
+</script>
 </body>
 </html>
