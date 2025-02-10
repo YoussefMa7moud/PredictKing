@@ -702,5 +702,61 @@ unset($_SESSION['error_message']); // Clear the message after displaying
         leaderboardList.classList.toggle('active');
     }
 </script>
+
+
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
+  import { getMessaging , getToken } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-messaging.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyD5wnr02_0-lYTGVu8Jum3NI-44gN6c-B4",
+    authDomain: "predict-king.firebaseapp.com",
+    projectId: "predict-king",
+    storageBucket: "predict-king.firebasestorage.app",
+    messagingSenderId: "117201064717",
+    appId: "1:117201064717:web:32c6d98fc1db32b5a39644",
+    measurementId: "G-6PFC2T3TK9"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const messaging = getMessaging(app);
+
+navigator.serviceWorker.register('sw.js').then(registration => {
+
+    getToken(messaging, {
+        serviceWorkerRegistration: registration,
+        vapidKey: 'BJ7rCJmgjI30_iGEn8vmO_6-1rBgj-x6x-H1wDTvwDnMsnCJGv91sIcPlv0FLTyF5NbuGcatyrC8oDyWkrwNuiw' }).then((currentToken) => {
+  if (currentToken) {
+    // Send the token to your server and update the UI if necessary
+    // ...
+  } else {
+    // Show permission request UI
+    console.log('No registration token available. Request permission to generate one.');
+    // ...
+  }
+}).catch((err) => {
+  console.log('An error occurred while retrieving token. ', err);
+  // ...
+});
+
+
+});
+
+
+
+
+
+
+ 
+</script>
+
 </body>
 </html>
