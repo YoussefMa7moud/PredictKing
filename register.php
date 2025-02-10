@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - PredictKing</title>
+    <link rel="icon" type="image/png" href="src/Screenshot 2025-02-10 153127.png">
     <style>
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }

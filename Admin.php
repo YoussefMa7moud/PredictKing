@@ -86,6 +86,7 @@ $MatchesData = $matches->retrieveAllMatches();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - PredictKing</title>
+    <link rel="icon" type="image/png" href="src/Screenshot 2025-02-10 153127.png">
     <style>
         /* Add your CSS styles here */
         * {
