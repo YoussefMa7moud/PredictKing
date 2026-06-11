@@ -11,9 +11,9 @@ class Matches extends UserPrediction {
         $this->pdo = $db->getConnection();
     }
 
-    public function AddMatch($tournament, $team1Name, $team1Logo, $team2Name, $team2Logo, $ongoing, $matchDate) {
-        $sql = "INSERT INTO matches (Tournament, Team1Name, Team1Logo, Team2Name, Team2Logo, ongoing, date) 
-                VALUES (:tournament, :team1Name, :team1Logo, :team2Name, :team2Logo, :ongoing, :matchDate)";
+    public function AddMatch($tournament, $team1Name, $team1Logo, $team2Name, $team2Logo, $ongoing, $matchDate, $pointsMultiplier = 1) {
+        $sql = "INSERT INTO matches (Tournament, Team1Name, Team1Logo, Team2Name, Team2Logo, ongoing, date, PointsMultiplier) 
+                VALUES (:tournament, :team1Name, :team1Logo, :team2Name, :team2Logo, :ongoing, :matchDate, :pointsMultiplier)";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':tournament', $tournament);
@@ -23,6 +23,7 @@ class Matches extends UserPrediction {
         $stmt->bindParam(':team2Logo', $team2Logo);
         $stmt->bindParam(':ongoing', $ongoing, PDO::PARAM_INT);
         $stmt->bindParam(':matchDate', $matchDate);
+        $stmt->bindParam(':pointsMultiplier', $pointsMultiplier, PDO::PARAM_INT);
         
         return $stmt->execute();
     }

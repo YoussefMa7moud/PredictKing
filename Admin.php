@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['league'])) {
     $team2Name = $_POST['team2Name'];
     $team2Logo = $_POST['team2Logo'];
     $matchDate = $_POST['matchDate'];
+    $pointsMultiplier = isset($_POST['pointsMultiplier']) ? intval($_POST['pointsMultiplier']) : 1;
 
     // Default values for ongoing and final score
     $ongoing = 0; // Match is not ongoing by default
@@ -27,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['league'])) {
     $matches = new Matches();
 
     // Call the AddMatch function
-    $result = $matches->AddMatch($tournament, $team1Name, $team1Logo, $team2Name, $team2Logo, $ongoing, $matchDate);
+    $result = $matches->AddMatch($tournament, $team1Name, $team1Logo, $team2Name, $team2Logo, $ongoing, $matchDate, $pointsMultiplier);
 
     // Check if the match was added successfully
     if ($result) {
@@ -477,6 +478,17 @@ $MatchesData = $matches->retrieveAllMatches();
                             <input type="datetime-local" name="matchDate" class="form-input" required>
                         </div>
 
+                        <!-- Points Multiplier -->
+                        <div class="form-group">
+                            <label class="form-label">Points Multiplier</label>
+                            <select name="pointsMultiplier" class="form-select" required>
+                                <option value="1">1x (Standard Match)</option>
+                                <option value="2">2x (Double Points Match)</option>
+                                <option value="3">3x (Triple Points Match)</option>
+                                <option value="5">5x (Golden Match / Final)</option>
+                            </select>
+                        </div>
+
                         <!-- Submit Button -->
                         <button type="submit" class="submit-btn">Add Game</button>
                     </form>
@@ -537,7 +549,14 @@ $MatchesData = $matches->retrieveAllMatches();
             <?php foreach ($MatchesData as $match): ?>
                 <div class="game-item">
                     <div class="game-info">
-                        <div class="game-teams"><?php echo htmlspecialchars($match['Team1Name']) . ' vs ' . htmlspecialchars($match['Team2Name']); ?></div>
+                        <div class="game-teams">
+                            <?php echo htmlspecialchars($match['Team1Name']) . ' vs ' . htmlspecialchars($match['Team2Name']); ?>
+                            <?php if (isset($match['PointsMultiplier']) && $match['PointsMultiplier'] > 1): ?>
+                                <span style="font-size: 0.75rem; background: var(--accent); color: white; padding: 0.2rem 0.5rem; border-radius: 8px; margin-left: 0.5rem; font-weight: 700; display: inline-block; vertical-align: middle;">
+                                    <?php echo $match['PointsMultiplier']; ?>x Points
+                                </span>
+                            <?php endif; ?>
+                        </div>
                         <div class="game-meta"><?php echo htmlspecialchars($match['Tournament']); ?></div>
                     </div>
                     <?php if ($match['ongoing'] == 0): ?>

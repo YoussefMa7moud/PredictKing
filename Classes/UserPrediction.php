@@ -113,6 +113,16 @@ class UserPrediction  {
         $db = Database::getInstance();
         $pdo = $db->getConnection();
     
+        // Retrieve PointsMultiplier for the match
+        $sqlMultiplier = "SELECT PointsMultiplier FROM matches WHERE MatchID = :matchId";
+        $stmtMultiplier = $pdo->prepare($sqlMultiplier);
+        $stmtMultiplier->bindParam(':matchId', $matchId);
+        $stmtMultiplier->execute();
+        $multiplier = $stmtMultiplier->fetchColumn();
+        if (!$multiplier) {
+            $multiplier = 1;
+        }
+
         $sql = "SELECT UserID, Team1Score, Team2Score FROM userprediction WHERE MatchID = :matchId";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':matchId', $matchId);
@@ -129,6 +139,9 @@ class UserPrediction  {
                 $points = $WinnerPoints;
             }
     
+            // Apply multiplier
+            $points *= $multiplier;
+
             $sql = "UPDATE User SET TotalPoints = TotalPoints + :points WHERE UserID = :UserID";
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':points', $points);

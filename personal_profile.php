@@ -14,29 +14,25 @@ $predictionManager = new UserPrediction();
 
 // Check if the user_id is provided in the query string
 if (!isset($_GET['user_id'])) {
-    // Redirect to the home page if no user_id is provided
     header("Location: Home.php");
     exit();
 }
 
-
 if (!isset($_SESSION['UserID'])) {
-    // Redirect to the login page if the user is not logged in
     header("Location: Login.php");
     exit();
 }
 
-
 // Retrieve the user_id from the query parameter
-$userId = $_GET['user_id'];
+$profileUserId = $_GET['user_id'];
 
 // Fetch user data for the passed user_id
-$userData = $user->retrieveUserDataWithId($userId);
+$profileUserData = $user->retrieveUserDataWithId($profileUserId);
 
-if ($userData) {
-    $FirstName = $userData['FirstName'];
-    $LastName = $userData['LastName'];
-    $TotalPoints = $userData['TotalPoints'];
+if ($profileUserData) {
+    $FirstName = $profileUserData['FirstName'];
+    $LastName = $profileUserData['LastName'];
+    $TotalPoints = $profileUserData['TotalPoints'];
 } else {
     echo "User data not found.";
     exit();
@@ -49,20 +45,11 @@ $matches = $matchHandler->GetMatches();
 $userPredictions = [];
 foreach ($matches as $match) {
     $matchId = $match['MatchID'];
-    $prediction = $predictionManager->getUserPrediction($userId, $matchId);
+    $prediction = $predictionManager->getUserPrediction($profileUserId, $matchId);
     if ($prediction) {
         $userPredictions[$matchId] = $prediction;
     }
 }
-
-
-$users = $user->retriveAllUserScore();
-
-// Display success or error messages (if any)
-$successMessage = $_SESSION['success_message'] ?? '';
-$errorMessage = $_SESSION['error_message'] ?? '';
-unset($_SESSION['success_message']); // Clear the message after displaying
-unset($_SESSION['error_message']); // Clear the message after displaying
 ?>
 
 <!DOCTYPE html>
@@ -70,559 +57,639 @@ unset($_SESSION['error_message']); // Clear the message after displaying
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PredictKing - User Predictions</title>
+    <title>Profile - PredictKing</title>
     <link rel="icon" type="image/png" href="src/Screenshot 2025-02-10 153127.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #1e1e2f;
+            --secondary: #8d99ae;
+            --accent: #ef233c;
+            --accent-glow: rgba(239, 35, 60, 0.4);
+            --background: #0f0f1a;
+            --card-bg: #1a1a2e;
+            --text: #ffffff;
+            --text-secondary: #a0aec0;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --success: #2ea44f;
+            --success-glow: rgba(46, 164, 79, 0.3);
+            --info: #0077ff;
+            --info-glow: rgba(0, 119, 255, 0.3);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: 'Outfit', -apple-system, sans-serif;
             scroll-behavior: smooth;
         }
 
-        :root {
-            --primary: #2b2d42;
-            --secondary: #8d99ae;
-            --accent: #ef233c;
-            --background: #edf2f4;
-            --card-bg: #ffffff;
-            --text: #2b2d42;
-        }
-
         body {
-            background-color: var(--primary);
+            background-color: var(--background);
             color: var(--text);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
         }
 
-        /* Header Styles */
+        /* Sticky Glass Header */
         .header {
-            background-color: var(--primary);
-            padding: 1rem;
-            border-bottom: 2px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
         }
 
         .nav {
             max-width: 1400px;
             margin: 0 auto;
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            gap: 1rem;
-            padding: 0 2rem;
         }
 
         .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
             color: white;
             font-size: 1.8rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
+            text-decoration: none;
         }
 
         .nav-logo span {
             color: var(--accent);
         }
 
+        .nav-world-cup-logo {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5));
+        }
+
         .nav-menu {
             display: flex;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            justify-content: center;
+            align-items: center;
+            gap: 2rem;
         }
 
         .nav-link {
-            color: var(--secondary);
+            color: var(--text-secondary);
             text-decoration: none;
             font-weight: 600;
             text-transform: uppercase;
             font-size: 0.9rem;
             letter-spacing: 1px;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.25rem 0;
         }
 
-        .nav-link:hover {
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--accent);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after, .nav-link.active::after {
+            width: 100%;
+        }
+
+        .nav-link:hover, .nav-link.active {
             color: white;
         }
 
-        /* Main Content */
+        .logout-btn {
+            color: var(--accent) !important;
+        }
+
+        .menu-toggle {
+            display: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        /* Container Layout */
         .container {
-            max-width: 1400px;
+            max-width: 1000px;
             margin: 0 auto;
+            width: 100%;
             padding: 2rem;
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 2rem;
-            background-color: var(--background);
-            min-height: calc(100vh - 80px);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        /* Profile Card */
-        .profile-card {
-            background: linear-gradient(135deg, var(--primary), #3d405b);
-            border-radius: 15px;
-            padding: 2rem;
-            color: white;
-            margin-bottom: 2rem;
-        }
-
-        .profile-header {
+        /* Profile Banner Card */
+        .profile-banner-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, #20203a 100%);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem;
             display: flex;
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            justify-content: space-between;
+            gap: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
         }
 
         .profile-avatar {
-            width: 60px;
-            height: 60px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            background-color: var(--accent);
+            background: linear-gradient(135deg, var(--accent) 0%, #ff5c75 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
+            font-size: 3rem;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 8px 25px var(--accent-glow);
+            border: 4px solid rgba(255, 255, 255, 0.1);
         }
 
-        .profile-info h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.25rem;
+        .profile-details h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 0.5rem;
         }
 
-        .profile-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
+        .profile-details p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .stat {
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 1rem;
-            border-radius: 10px;
+        .profile-score-stat {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.5rem 2.5rem;
             text-align: center;
+            min-width: 180px;
         }
 
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: bold;
+        .score-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
             margin-bottom: 0.25rem;
         }
 
-        .stat-label {
+        .score-label {
             font-size: 0.8rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.8;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            font-weight: 700;
         }
 
-        /* Match Cards */
-        .matches-grid {
-            display: grid;
-            gap: 1.5rem;
-        }
-
-        .match-card {
-            background-color: var(--card-bg);
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .match-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .match-header {
-            background-color: var(--primary);
-            color: white;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .match-league {
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .match-league::before {
-            content: "•";
-            color: var(--accent);
-        }
-
-        .match-time {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .match-content {
-            padding: 2rem;
-        }
-
-        .match-teams {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 2rem;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .team {
-            text-align: center;
-        }
-
-        .team-logo {
-            width: 80px;
-            height: 80px;
-            background-color: var(--background);
-            border-radius: 50%;
-            margin: 0 auto 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .team-name {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .vs {
+        /* History Section */
+        .section-title {
+            font-size: 1.75rem;
             font-weight: 800;
-            color: var(--accent);
-            font-size: 1.2rem;
-        }
-
-        .prediction-form {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 1rem;
-            align-items: center;
-            background-color: var(--background);
-            padding: 1.5rem;
-            border-radius: 10px;
-        }
-
-        .prediction-input {
-            width: 100%;
-            padding: 1rem;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            font-size: 1.2rem;
-            text-align: center;
-            transition: border-color 0.3s ease;
-        }
-
-        .prediction-input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .submit-btn {
-            grid-column: 1 / -1;
-            background-color: var(--accent);
             color: white;
-            border: none;
-            padding: 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .submit-btn:hover {
-            background-color: #d90429;
-        }
-
-        /* Leaderboard */
-        .leaderboard {
-            background-color: var(--card-bg);
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .leaderboard-header {
-            background-color: var(--primary);
-            color: white;
-            padding: 1.5rem;
-            text-align: center;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer; /* Make the header clickable */
-        }
-
-        .leaderboard-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .leaderboard-list {
-            list-style: none;
-            padding: 1.5rem;
-        }
-
-        .leaderboard-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            border-bottom: 1px solid var(--background);
-        }
-
-        .leaderboard-item:last-child {
-            border-bottom: none;
-        }
-
-        .player-info {
+            margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
 
-        .player-rank {
-            font-weight: 800;
+        .section-title span {
             color: var(--accent);
+        }
+
+        .matches-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        /* Match Cards */
+        .match-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .match-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Points Highlight Borders */
+        .match-card.exact-match { border: 1.5px solid var(--success) !important; box-shadow: 0 0 15px var(--success-glow); }
+        .match-card.outcome-match { border: 1.5px solid var(--info) !important; box-shadow: 0 0 15px var(--info-glow); }
+        .match-card.incorrect-match { border: 1.5px solid rgba(239, 35, 60, 0.25) !important; }
+        .match-card.no-pred-match { opacity: 0.75; }
+
+        .match-header {
+            padding: 1rem 2rem;
+            background-color: rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .match-league {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .match-league::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent);
+            border-radius: 50%;
+        }
+
+        .match-card.exact-match .match-league::before { background-color: var(--success); }
+        .match-card.outcome-match .match-league::before { background-color: var(--info); }
+
+        .match-header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .history-badge {
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .history-badge.badge-exact { background-color: var(--success); color: white; box-shadow: 0 0 10px var(--success-glow); }
+        .history-badge.badge-outcome { background-color: var(--info); color: white; box-shadow: 0 0 10px var(--info-glow); }
+        .history-badge.badge-incorrect { background-color: rgba(239, 35, 60, 0.15); border: 1px solid var(--accent); color: #ff4d6d; }
+        .history-badge.badge-none { background-color: rgba(255, 255, 255, 0.05); color: var(--text-secondary); }
+
+        .match-time {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .match-content {
+            padding: 2.5rem 2rem;
+        }
+
+        .match-teams {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .team {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .team-logo-wrapper {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .team-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        .team-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        .score-actual-display {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .score-num {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        .vs {
+            font-weight: 900;
+            color: var(--accent);
+            font-size: 1.3rem;
+            font-style: italic;
+        }
+
+        .history-pred-text {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .history-pred-text span {
+            color: white;
+            font-weight: 800;
             font-size: 1.1rem;
         }
 
-        .player-points {
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        /* Leaderboard Toggle Button */
-        .leaderboard-toggle {
-            font-size: 1.5rem;
-            transition: transform 0.3s ease; /* Add a smooth rotation animation */
-        }
-
-        .leaderboard-list.active + .leaderboard-header .leaderboard-toggle {
-            transform: rotate(180deg); /* Rotate the arrow when the list is active */
-        }
-
-        /* History Section */
-        .history-section {
-            margin-top: 2rem;
-            background-color: var(--card-bg);
-            border-radius: 15px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .history-section h3 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 1.5rem;
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--glass-border);
+            padding: 2rem;
             text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 4rem;
         }
 
-        .history-section .match-card {
-            margin-bottom: 1.5rem;
+        .footer span {
+            color: var(--accent);
         }
 
-        .history-section .match-header {
-            background-color: #Ef233C;
-        }
-
-        .history-section .team-name {
-            color: black;
-        }
-
-        .prediction-display {
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .user-prediction {
-            font-weight: bold;
-            color: #4CAF50; /* Green color for predictions */
-        }
-
-        .no-prediction {
-            font-style: italic;
-            color: black; /* Gray color for no prediction */
-        }
-
-        .prediction-score {
-            font-size: 1.2em;
-            color: #333;
-        }
-
-        /* Mobile Styles */
+        /* Responsive Layouts */
         @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-                padding: 1rem;
+            .menu-toggle {
+                display: block;
             }
 
-            /* Reorder elements for mobile */
-            .container > aside {
-                order: 1; /* Leaderboard appears first */
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background-color: rgba(26, 26, 46, 0.95);
+                backdrop-filter: blur(15px);
+                border-bottom: 1px solid var(--glass-border);
+                flex-direction: column;
+                gap: 1.25rem;
+                padding: 2rem;
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
             }
 
-            .container > main {
-                order: 2; /* Main content (matches and history) appears second */
+            .nav-menu.active {
+                display: flex;
             }
 
-            .leaderboard-list {
-                display: none; /* Hide leaderboard list by default on mobile */
+            .nav-link {
+                width: 100%;
+                text-align: center;
+                font-size: 1.05rem;
             }
 
-            .leaderboard-list.active {
-                display: block; /* Show leaderboard list when active */
+            .profile-banner-card {
+                flex-direction: column;
+                padding: 2rem;
+                text-align: center;
+            }
+
+            .profile-banner-left {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .profile-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 2.2rem;
+            }
+
+            .profile-details h2 {
+                font-size: 1.75rem;
+            }
+
+            .match-teams {
+                gap: 1rem;
+            }
+
+            .team-logo-wrapper {
+                width: 65px;
+                height: 65px;
+            }
+
+            .team-logo {
+                width: 38px;
+                height: 38px;
+            }
+
+            .team-name {
+                font-size: 0.9rem;
             }
         }
-
-        .player-link {
-    text-decoration: none;
-    color: inherit;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-    transition: background-color 0.3s ease;
-}
-
-.player-link:hover {
-    background-color: #f5f5f5;
-}
-</style>
+    </style>
 </head>
 <body>
-<header class="header">
-    <nav class="nav">
-        <div class="nav-logo">Predict<span>King</span></div>
-        <div class="nav-menu">
-            <a href="Home.php" class="nav-link">Home</a>
-            <a href="Rules.php" class="nav-link">Rules</a>
-            <a href="News.php" class="nav-link">News</a>
-            <a href="Classes/Logout.php" class="nav-link" style="color: red;">Logout</a>
-        </div>
-    </nav>
-</header>
+    <!-- Premium Header -->
+    <header class="header">
+        <nav class="nav">
+            <a href="Home.php" class="nav-logo">
+                <img src="src/world_cup_logo.png" alt="World Cup Trophy Logo" class="nav-world-cup-logo">
+                Predict<span>King</span>
+            </a>
+            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+            <div class="nav-menu">
+                <a href="Home.php" class="nav-link">Home</a>
+                <a href="Leaderboard.php" class="nav-link">Leaderboard</a>
+                <a href="Badges.php" class="nav-link">Badges</a>
+                <a href="Rules.php" class="nav-link">Rules</a>
+                <a href="News.php" class="nav-link">News</a>
+                <a href="Classes/Logout.php" class="nav-link logout-btn">Logout</a>
+            </div>
+        </nav>
+    </header>
 
-<div class="container">
-    <main>
-        <div class="profile-card">
-            <div class="profile-header">
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Profile Banner -->
+        <section class="profile-banner-card">
+            <div class="profile-banner-left">
                 <div class="profile-avatar"><?php echo strtoupper(substr($FirstName, 0, 1)); ?></div>
-                <div class="profile-info">
+                <div class="profile-details">
                     <h2><?php echo htmlspecialchars($FirstName . ' ' . $LastName); ?></h2>
+                    <p>⚽ Predictor Profile</p>
                 </div>
             </div>
-                <div class="stat">
-                    <div class="stat-value"><?php echo htmlspecialchars($TotalPoints); ?></div>
-                    <div class="stat-label">Points</div>
-                </div>
+            <div class="profile-score-stat">
+                <div class="score-value"><?php echo htmlspecialchars($TotalPoints); ?></div>
+                <div class="score-label">Points Scored</div>
             </div>
-      
+        </section>
 
-        <!-- History Section -->
-        <div class="history-section" style="background-color: #2B2D42;">
-            <h3 style="color: white;">Predictions by <?php echo htmlspecialchars($FirstName); ?> 🕓</h3>
+        <!-- User Predictions History Section -->
+        <section>
+            <h2 class="section-title">Predictions by <span><?php echo htmlspecialchars($FirstName); ?> 🕓</span></h2>
             <div class="matches-grid">
-                <?php foreach ($matches as $match): ?>
-                    <?php
-                    // Check if the match is ongoing or completed
+                <?php 
+                $hasPredictions = false;
+                foreach ($matches as $match):
                     if ($match['ongoing'] == 1) {
-                        // Check if the user has predicted this match
+                        $hasPredictions = true;
                         $matchId = $match['MatchID'];
                         $userPrediction = $userPredictions[$matchId] ?? null;
                         $hasPredicted = !empty($userPrediction);
-                    ?>
-                        <div class="match-card">
-                            <div class="match-header" style="background-color: #Ef233C;">
-                                <div class="match-league"><?php echo htmlspecialchars($match['Tournament']); ?></div>
+                        
+                        $multiplier = isset($match['PointsMultiplier']) ? intval($match['PointsMultiplier']) : 1;
+
+                        $isExact = false;
+                        $isCorrectOutcome = false;
+                        $pointsEarned = 0;
+                        $cardHighlightClass = 'no-pred-match';
+                        $badgeHTML = '<span class="history-badge badge-none">No prediction</span>';
+
+                        if ($hasPredicted) {
+                            $t1P = intval($userPrediction['Team1Score']);
+                            $t2P = intval($userPrediction['Team2Score']);
+                            $t1A = intval($match['Team1FinalScore']);
+                            $t2A = intval($match['Team2FinalScore']);
+
+                            if ($t1P === $t1A && $t2P === $t2A) {
+                                $isExact = true;
+                                $pointsEarned = 30 * $multiplier;
+                                $cardHighlightClass = 'exact-match';
+                                $badgeHTML = '<span class="history-badge badge-exact">Exact Score (+'.$pointsEarned.' pts)</span>';
+                            } else {
+                                $predictedOutcome = $t1P <=> $t2P;
+                                $actualOutcome = $t1A <=> $t2A;
+                                if ($predictedOutcome === $actualOutcome) {
+                                    $isCorrectOutcome = true;
+                                    $pointsEarned = 15 * $multiplier;
+                                    $cardHighlightClass = 'outcome-match';
+                                    $badgeHTML = '<span class="history-badge badge-outcome">Correct Outcome (+'.$pointsEarned.' pts)</span>';
+                                } else {
+                                    $pointsEarned = 0;
+                                    $cardHighlightClass = 'incorrect-match';
+                                    $badgeHTML = '<span class="history-badge badge-incorrect">Incorrect (0 pts)</span>';
+                                }
+                            }
+                        }
+                ?>
+                    <div class="match-card <?php echo $cardHighlightClass; ?>">
+                        <div class="match-header">
+                            <div class="match-league"><?php echo htmlspecialchars($match['Tournament']); ?></div>
+                            <div class="match-header-right">
+                                <?php echo $badgeHTML; ?>
                                 <div class="match-time">Ended</div>
                             </div>
-                            <div class="match-content">
-                                <div class="match-teams">
-                                    <div class="team">
-                                        <div class="team-logo">
-                                            <img src="<?php echo htmlspecialchars($match['Team1Logo']); ?>" alt="<?php echo htmlspecialchars($match['Team1Name']); ?> Logo" style="width: 80px; height: 80px; object-fit: contain;">
-                                        </div>
-                                        <div class="team-name" style="color:black"><?php echo htmlspecialchars($match['Team1Name']); ?></div>
+                        </div>
+                        <div class="match-content">
+                            <div class="match-teams">
+                                <div class="team">
+                                    <div class="team-logo-wrapper">
+                                        <img src="<?php echo htmlspecialchars($match['Team1Logo']); ?>" alt="<?php echo htmlspecialchars($match['Team1Name']); ?>" class="team-logo">
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <!-- Team 1 Score -->
-                                        <span style="font-weight: bold; font-size: 1.2em; color: black;"><?php echo htmlspecialchars($match['Team1FinalScore'] ?? '0'); ?></span>
-                                        <div class="vs">VS</div>
-                                        <!-- Team 2 Score -->
-                                        <span style="font-weight: bold; font-size: 1.2em; color: black;"><?php echo htmlspecialchars($match['Team2FinalScore'] ?? '0'); ?></span>
-                                    </div>
-                                    <div class="team">
-                                        <div class="team-logo">
-                                            <img src="<?php echo htmlspecialchars($match['Team2Logo']); ?>" alt="<?php echo htmlspecialchars($match['Team2Name']); ?> Logo" style="width: 80px; height: 80px; object-fit: contain;">
-                                        </div>
-                                        <div class="team-name" style="color:black"><?php echo htmlspecialchars($match['Team2Name']); ?></div>
-                                    </div>
+                                    <div class="team-name"><?php echo htmlspecialchars($match['Team1Name']); ?></div>
                                 </div>
-                                <div class="prediction-display">
-                                    <?php if ($hasPredicted): ?>
-                                        <div class="user-prediction">
-                                            <span>Prediction:</span>
-                                            <span class="prediction-score">
-                                                <?php echo htmlspecialchars($userPrediction['Team1Score']); ?> - <?php echo htmlspecialchars($userPrediction['Team2Score']); ?>
-                                            </span>
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="no-prediction">
-                                            No prediction for this match.
-                                        </div>
-                                    <?php endif; ?>
+
+                                <div class="score-actual-display">
+                                    <span class="score-num"><?php echo htmlspecialchars($match['Team1FinalScore'] ?? '0'); ?></span>
+                                    <div class="vs">-</div>
+                                    <span class="score-num"><?php echo htmlspecialchars($match['Team2FinalScore'] ?? '0'); ?></span>
+                                </div>
+
+                                <div class="team">
+                                    <div class="team-logo-wrapper">
+                                        <img src="<?php echo htmlspecialchars($match['Team2Logo']); ?>" alt="<?php echo htmlspecialchars($match['Team2Name']); ?>" class="team-logo">
+                                    </div>
+                                    <div class="team-name"><?php echo htmlspecialchars($match['Team2Name']); ?></div>
                                 </div>
                             </div>
+
+                            <div class="history-pred-text">
+                                <?php if ($hasPredicted): ?>
+                                    Prediction was: <span><?php echo htmlspecialchars($userPrediction['Team1Score'] . ' - ' . $userPrediction['Team2Score']); ?></span>
+                                <?php else: ?>
+                                    Did not predict this match.
+                                <?php endif; ?>
+                            </div>
                         </div>
-                    <?php } ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </main>
-
-
-     <!-- Leaderboard Section -->
-        <div class="leaderboard">
-    <div class="leaderboard-header" onclick="toggleLeaderboard()">
-        <h3 class="leaderboard-title">Leaderboard</h3>
-        <span class="leaderboard-toggle">▼</span>
-    </div>
-    <ul class="leaderboard-list" id="leaderboard-list">
-        <?php foreach ($users as $key => $value): ?>
-            <li class="leaderboard-item">
-            <a href="personal_profile.php?user_id=<?php echo $value['UserID']; ?>" class="player-link">
-                    <div class="player-info">
-                        <div class="player-rank"><?php echo $key + 1; ?></div>
-                        <div><?php echo htmlspecialchars($value['FirstName'] . ' ' . $value['LastName']); ?></div>
                     </div>
-                    <div class="player-points"><?php echo htmlspecialchars($value['TotalPoints']); ?> Points</div>
-                </a>
-            </li>
-        <?php endforeach; ?>
-    </ul>
-</div>
+                <?php 
+                    }
+                endforeach;
+                if (!$hasPredictions):
+                ?>
+                    <div class="match-card" style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+                        This user hasn't made any predictions for ended matches yet.
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+    </div>
 
-<script>
-    function toggleLeaderboard() {
-        const leaderboardList = document.getElementById('leaderboard-list');
-        leaderboardList.classList.toggle('active');
-    }
-</script>
-</div>
+    <!-- Premium Footer -->
+    <footer class="footer">
+        <p>&copy; <?php echo date('Y'); ?> PredictKing - World Cup Edition. Powered by <span>⚽</span></p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.querySelector('.nav-menu');
+            menu.classList.toggle('active');
+        }
+    </script>
 </body>
 </html>
